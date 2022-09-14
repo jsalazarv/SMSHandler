@@ -40,3 +40,5 @@ dist/
 .env.local
 .env.*.local
 .env
+
+atomics_otp.sqlite
