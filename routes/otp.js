@@ -11,6 +11,8 @@ const Otp = require('../Models/Otp');
 const {log} = require("debug");
 
 /* POST home page. */
+
+//TODO: Add validation
 router.post('/', async (req, res, next) => {
     const {phone} = req.body;
     let otp = otpGen(5, digits);
@@ -28,6 +30,34 @@ router.post('/', async (req, res, next) => {
         return res.status(200).send( { success: true, sid: oneTimePassword.id });
     } catch (error){
         return  res.status(500).send( { success: false,  error });
+    }
+});
+
+//TODO: Add validation
+router.post('/verify', async (req, res) => {
+    const { sid, otp } = req.body;
+
+    try {
+      const oneTimePassword = await Otp.findOne({
+            where: {
+                id: sid,
+                otp
+            }
+        });
+
+        if(!oneTimePassword) {
+            throw new Error("OTP NOT FOUND");
+        }
+
+        await Otp.destroy({
+            where: {
+                id: sid
+            }
+        });
+
+        return res.status(200).send( { success: true });
+    } catch (error) {
+        return res.status(500).send( { success: false,  error, message: "OTP invalid or expired" });
     }
 });
 
