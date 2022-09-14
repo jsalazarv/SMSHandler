@@ -11,30 +11,24 @@ const Otp = require('../Models/Otp');
 const {log} = require("debug");
 
 /* POST home page. */
-router.post('/', function(req, res, next) {
+router.post('/', async (req, res, next) => {
     const {phone} = req.body;
-    let verificationCode = otpGen(5, digits);
+    let otp = otpGen(5, digits);
 
-    client.messages
-        .create({
-            body: `Tu código ATOMIC es: ${verificationCode}`,
-            from,
-            to: phone
-        })
-        .then(message => {
-            Otp.create({
-                id: message.sid,
-                phone,
-                otp: verificationCode
-            })
-                .then(() => console.log("then"))
-                .catch((error) => console.log(error));
+    try {
+        const {sid: id } = await client.messages
+            .create({
+                body: `Tu código ATOMIC es: ${otp}`,
+                from,
+                to: phone
+            });
 
-            res.status(200).send( { success: true, sid: message.sid });
-        })
-        .catch((error) => {
-            res.status(500).send( { success: false,  error });
-        });
+        const oneTimePassword = await Otp.create({ id, phone, otp });
+
+        return res.status(200).send( { success: true, sid: oneTimePassword.id });
+    } catch (error){
+        return  res.status(500).send( { success: false,  error });
+    }
 });
 
 module.exports = router;
